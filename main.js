@@ -67,3 +67,120 @@ const articulosConstitucion = {
   "55": "Suspensión de los derechos y libertades"
 };
 
+const generarPreguntaArticulo = () => {
+  const articulos = Object.keys(articulosConstitucion);
+  const indiceAleatorio = Math.floor(Math.random() * articulos.length);
+  const articuloCorrecto = articulos[indiceAleatorio];
+  const temaArticulo = articulosConstitucion[articuloCorrecto];
+
+  const opcionesIncorrectas = [];
+  while (opcionesIncorrectas.length < 3) {
+    const indiceIncorrecto = Math.floor(Math.random() * articulos.length);
+    const articuloIncorrecto = articulos[indiceIncorrecto];
+
+    if (articuloIncorrecto !== articuloCorrecto && !opcionesIncorrectas.includes(articuloIncorrecto)) {
+      opcionesIncorrectas.push(articuloIncorrecto);
+    }
+  }
+
+  const todasLasOpciones = [articuloCorrecto, ...opcionesIncorrectas];
+  const opcionesMezcladas = todasLasOpciones.sort(() => Math.random() - 0.5);
+
+  return {
+    pregunta: `¿Qué artículo de la constitución habla sobre ${temaArticulo.toLowerCase()}?`,
+    opciones: opcionesMezcladas,
+    respuestaCorrecta: articuloCorrecto
+  };
+};
+
+let preguntaActual = null;
+let respuestaSeleccionada = null;
+let totalPreguntas = 0;
+let aciertos = 0;
+let preguntaNumero = 0;
+
+const questionText = document.getElementById('question-text');
+const optionsContainer = document.getElementById('options');
+const nextBtn = document.getElementById('next-btn');
+const restartBtn = document.getElementById('restart-btn');
+const currentQuestionSpan = document.getElementById('current-question');
+const totalQuestionsSpan = document.getElementById('total-questions');
+const correctAnswersSpan = document.getElementById('correct-answers');
+
+function iniciarTest() {
+  totalPreguntas = 10; // Puedes cambiar el número de preguntas
+  preguntaNumero = 0;
+  aciertos = 0;
+  totalQuestionsSpan.textContent = totalPreguntas;
+  restartBtn.style.display = 'none';
+  nextBtn.style.display = 'inline-block';
+  mostrarSiguientePregunta();
+}
+
+function mostrarSiguientePregunta() {
+  if (preguntaNumero >= totalPreguntas) {
+    finalizarTest();
+    return;
+  }
+
+  preguntaNumero++;
+  respuestaSeleccionada = null;
+  preguntaActual = generarPreguntaArticulo();
+
+  questionText.textContent = preguntaActual.pregunta;
+  currentQuestionSpan.textContent = preguntaNumero;
+
+  optionsContainer.innerHTML = '';
+  preguntaActual.opciones.forEach(opcion => {
+    const button = document.createElement('div');
+    button.className = 'option';
+    button.textContent = `Artículo ${opcion}`;
+    button.onclick = () => seleccionarOpcion(opcion, button);
+    optionsContainer.appendChild(button);
+  });
+
+  nextBtn.disabled = true;
+}
+
+function seleccionarOpcion(opcion, elemento) {
+  if (respuestaSeleccionada !== null) return;
+
+  respuestaSeleccionada = opcion;
+  const opciones = document.querySelectorAll('.option');
+
+  opciones.forEach(opt => {
+    opt.onclick = null;
+    const articulo = opt.textContent.replace('Artículo ', '');
+
+    if (articulo === preguntaActual.respuestaCorrecta) {
+      opt.classList.add('correct');
+    } else if (articulo === opcion) {
+      opt.classList.add('incorrect');
+    }
+  });
+
+  if (opcion === preguntaActual.respuestaCorrecta) {
+    aciertos++;
+    correctAnswersSpan.textContent = aciertos;
+  }
+
+  nextBtn.disabled = false;
+}
+
+function finalizarTest() {
+  questionText.textContent = '¡Test completado!';
+  optionsContainer.innerHTML = `
+    <p style="text-align: center; font-size: 20px; padding: 20px;">
+      Has acertado ${aciertos} de ${totalPreguntas} preguntas.
+      <br><br>
+      Porcentaje: ${Math.round((aciertos / totalPreguntas) * 100)}%
+    </p>
+  `;
+  nextBtn.style.display = 'none';
+  restartBtn.style.display = 'inline-block';
+}
+
+nextBtn.addEventListener('click', mostrarSiguientePregunta);
+restartBtn.addEventListener('click', iniciarTest);
+
+iniciarTest();
