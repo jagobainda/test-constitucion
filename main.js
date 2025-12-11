@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const totalQuestionsSpan = document.getElementById('total-questions');
     const correctAnswersSpan = document.getElementById('correct-answers');
 
-    function iniciarTest() {
+    const iniciarTest = () => {
         totalPreguntas = 15;
         preguntaNumero = 0;
         aciertos = 0;
@@ -127,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mostrarSiguientePregunta();
     }
 
-    function mostrarSiguientePregunta() {
+    const mostrarSiguientePregunta = () => {
         if (preguntaNumero >= totalPreguntas) {
             finalizarTest();
             return;
@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
         nextBtn.disabled = true;
     }
 
-    function seleccionarOpcion(opcion) {
+    const seleccionarOpcion = (opcion) => {
         if (respuestaSeleccionada !== null) return;
 
         respuestaSeleccionada = opcion;
@@ -169,23 +169,22 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        if (opcion === preguntaActual.respuestaCorrecta) {
-            aciertos++;
-            correctAnswersSpan.textContent = aciertos;
-        }
+        if (opcion === preguntaActual.respuestaCorrecta) aciertos++;
+
+        correctAnswersSpan.textContent = aciertos;
 
         nextBtn.disabled = false;
     }
 
-    function finalizarTest() {
+    const finalizarTest = () => {
         questionText.textContent = '¡Test completado!';
         optionsContainer.innerHTML = `
-    <p style="text-align: center; font-size: 20px; padding: 20px;">
-      Has acertado ${aciertos} de ${totalPreguntas} preguntas.
-      <br><br>
-      Porcentaje: ${Math.round((aciertos / totalPreguntas) * 100)}%
-    </p>
-  `;
+            <p style="text-align: center; font-size: 20px; padding: 20px;">
+              Has acertado ${aciertos} de ${totalPreguntas} preguntas.
+              <br><br>
+              Porcentaje: ${Math.round((aciertos / totalPreguntas) * 100)}%
+            </p>
+          `;
         nextBtn.style.display = 'none';
         restartBtn.style.display = 'inline-block';
     }
