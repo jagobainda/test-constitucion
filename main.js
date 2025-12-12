@@ -159,8 +159,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const startBtn = document.getElementById('start-btn');
 
     const iniciarTest = () => {
-        // Leer configuración de la pantalla de inicio
         const checkboxes = document.querySelectorAll('.question-type-checkbox');
+        const validationMessage = document.getElementById('validation-message');
         tiposPreguntasConfig = {};
 
         checkboxes.forEach(checkbox => {
@@ -175,12 +175,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // Validar que al menos un tipo esté activo
         const tiposActivos = Object.values(tiposPreguntasConfig).filter(t => t.activo);
         if (tiposActivos.length === 0) {
-            alert('Debes seleccionar al menos un tipo de pregunta');
+            validationMessage.textContent = 'Debes seleccionar al menos un tipo de pregunta';
             return;
         }
+
+        const totalFrecuencia = tiposActivos.reduce((sum, config) => sum + config.frecuencia, 0);
+        if (totalFrecuencia !== 100) {
+            validationMessage.textContent = `Los porcentajes deben sumar 100 (actualmente suman ${totalFrecuencia})`;
+            return;
+        }
+
+        validationMessage.textContent = '';
 
         totalPreguntas = 15;
         preguntaNumero = 0;
@@ -188,7 +195,6 @@ document.addEventListener("DOMContentLoaded", () => {
         articulosDisponibles = Object.keys(articulosConstitucion).slice();
         totalQuestionsSpan.textContent = totalPreguntas;
 
-        // Ocultar pantalla de inicio y mostrar el test
         startScreen.style.display = 'none';
         questionContainer.style.display = 'block';
         document.querySelector('.controls').style.display = 'flex';
@@ -250,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
             button.className = 'option';
 
             if (preguntaActual.esArticuloTema) {
-                button.textContent = opcion;
+                button.textContent = opcion.toString();
             } else {
                 button.textContent = `Artículo ${opcion}`;
             }
@@ -273,10 +279,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             let valorOpcion;
             if (preguntaActual.esArticuloTema) {
-                // Para preguntas articuloTema, el texto es directamente el tema
                 valorOpcion = opt.textContent;
             } else {
-                // Para preguntas temaArticulo, extraer el número del artículo
                 valorOpcion = opt.textContent.replace('Artículo ', '');
             }
 
@@ -318,6 +322,34 @@ document.addEventListener("DOMContentLoaded", () => {
     restartBtn.addEventListener('click', volverAlInicio);
     startBtn.addEventListener('click', iniciarTest);
 
+    const validarPorcentajes = () => {
+        const validationMessage = document.getElementById('validation-message');
+        const checkboxes = document.querySelectorAll('.question-type-checkbox');
+
+        let totalFrecuencia = 0;
+        let tiposActivos = 0;
+
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const tipo = checkbox.dataset.tipo;
+                const frecuenciaInput = document.getElementById(`frecuencia-${tipo}`);
+                totalFrecuencia += parseInt(frecuenciaInput.value) || 0;
+                tiposActivos++;
+            }
+        });
+
+        if (tiposActivos === 0) {
+            validationMessage.textContent = 'Debes seleccionar al menos un tipo de pregunta';
+            validationMessage.style.color = '#f44336';
+        } else if (totalFrecuencia !== 100) {
+            validationMessage.textContent = `Los porcentajes deben sumar 100 (actualmente suman ${totalFrecuencia})`;
+            validationMessage.style.color = '#f44336';
+        } else {
+            validationMessage.textContent = '✓ Configuración correcta';
+            validationMessage.style.color = '#4caf50';
+        }
+    };
+
     const checkboxes = document.querySelectorAll('.question-type-checkbox');
     checkboxes.forEach(checkbox => {
         const tipo = checkbox.dataset.tipo;
@@ -328,8 +360,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!checkbox.checked) {
                 frecuenciaInput.value = 0;
             }
+            validarPorcentajes();
         });
+
+        frecuenciaInput.addEventListener('input', validarPorcentajes);
     });
+
+    validarPorcentajes();
 
     questionContainer.style.display = 'none';
     document.querySelector('.controls').style.display = 'none';

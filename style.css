@@ -222,6 +222,16 @@ button:disabled {
     padding-left: 30px;
 }
 
+.validation-message {
+    text-align: center;
+    color: #f44336;
+    font-weight: 600;
+    font-size: 16px;
+    margin-top: 15px;
+    min-height: 24px;
+    padding: 5px;
+}
+
 .start-button {
     width: 100%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
