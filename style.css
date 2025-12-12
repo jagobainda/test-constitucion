@@ -143,6 +143,37 @@ button:disabled {
     font-size: 18px;
 }
 
+.question-count-control {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+}
+
+.question-count-control label {
+    font-size: 16px;
+    color: #333;
+    font-weight: 500;
+}
+
+.question-count-input {
+    width: 100px;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.question-count-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
 .question-types {
     display: flex;
     flex-direction: column;

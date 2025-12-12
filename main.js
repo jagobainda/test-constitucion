@@ -189,11 +189,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         validationMessage.textContent = '';
 
-        totalPreguntas = 15;
+        const numeroPreguntasInput = document.getElementById('numero-preguntas');
+        totalPreguntas = parseInt(numeroPreguntasInput.value) || 15;
         preguntaNumero = 0;
         aciertos = 0;
         articulosDisponibles = Object.keys(articulosConstitucion).slice();
         totalQuestionsSpan.textContent = totalPreguntas;
+        correctAnswersSpan.textContent = aciertos;
 
         startScreen.style.display = 'none';
         questionContainer.style.display = 'block';
