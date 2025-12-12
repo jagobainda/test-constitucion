@@ -68,6 +68,11 @@ document.addEventListener("DOMContentLoaded", () => {
         "55": "Suspensión de los derechos y libertades"
     };
 
+    const articulosSuspension = {
+        excepcion: ['17.1', '17.2', '17.4'],
+        sitio: ['17', '18.2', '18.3', '19', '20.1 a)', '20.1 d)', '20.5', '21', '28.2', '37.2']
+    };
+
     const generarPreguntaTemaArticulo = () => {
         if (articulosDisponibles.length === 0) {
             return null;
@@ -135,6 +140,37 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     };
 
+    const generarPreguntaSuspension = () => {
+        const tiposEstado = ['excepcion', 'sitio'];
+        const estadoSeleccionado = tiposEstado[Math.floor(Math.random() * tiposEstado.length)];
+        const articulosSuspendidos = articulosSuspension[estadoSeleccionado];
+
+        // Seleccionar artículo correcto
+        const articuloCorrecto = articulosSuspendidos[Math.floor(Math.random() * articulosSuspendidos.length)];
+
+        // Generar opciones incorrectas (artículos que NO se suspenden en ese estado)
+        const todosLosArticulos = Object.keys(articulosConstitucion);
+        const opcionesIncorrectas = [];
+
+        while (opcionesIncorrectas.length < 3) {
+            const articuloAleatorio = todosLosArticulos[Math.floor(Math.random() * todosLosArticulos.length)];
+            if (!articulosSuspendidos.includes(articuloAleatorio) && !opcionesIncorrectas.includes(articuloAleatorio)) {
+                opcionesIncorrectas.push(articuloAleatorio);
+            }
+        }
+
+        const todasLasOpciones = [articuloCorrecto, ...opcionesIncorrectas];
+        const opcionesMezcladas = todasLasOpciones.sort(() => Math.random() - 0.5);
+
+        const nombreEstado = estadoSeleccionado === 'excepcion' ? 'excepción' : 'sitio';
+
+        return {
+            pregunta: `¿Qué artículo se suspende en el estado de ${nombreEstado}?`,
+            opciones: opcionesMezcladas,
+            respuestaCorrecta: articuloCorrecto
+        };
+    };
+
     let preguntaActual = null;
     let respuestaSeleccionada = null;
     let totalPreguntas = 0;
@@ -143,8 +179,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let articulosDisponibles = [];
 
     let tiposPreguntasConfig = {
-        'temaArticulo': { activo: true, frecuencia: 50 },
-        'articuloTema': { activo: true, frecuencia: 50 }
+        'temaArticulo': { activo: true, frecuencia: 33 },
+        'articuloTema': { activo: true, frecuencia: 33 },
+        'suspension': { activo: true, frecuencia: 34 }
     };
 
     const questionText = document.getElementById('question-text');
@@ -242,6 +279,8 @@ document.addEventListener("DOMContentLoaded", () => {
             preguntaActual = generarPreguntaTemaArticulo();
         } else if (tipoPregunta === 'articuloTema') {
             preguntaActual = generarPreguntaArticuloTema();
+        } else if (tipoPregunta === 'suspension') {
+            preguntaActual = generarPreguntaSuspension();
         }
 
         if (!preguntaActual) {
