@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "55": "Suspensión de los derechos y libertades"
     };
 
-    const generarPreguntaArticulo = () => {
+    const generarPreguntaTemaArticulo = () => {
         if (articulosDisponibles.length === 0) {
             return null;
         }
@@ -101,12 +101,51 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     };
 
+    const generarPreguntaArticuloTema = () => {
+        if (articulosDisponibles.length === 0) {
+            return null;
+        }
+
+        const indiceAleatorio = Math.floor(Math.random() * articulosDisponibles.length);
+        const articuloCorrecto = articulosDisponibles[indiceAleatorio];
+
+        articulosDisponibles.splice(indiceAleatorio, 1);
+
+        const temaArticulo = articulosConstitucion[articuloCorrecto];
+        const todosLosTemas = Object.values(articulosConstitucion);
+
+        const temasIncorrectos = [];
+        while (temasIncorrectos.length < 3) {
+            const indiceIncorrecto = Math.floor(Math.random() * todosLosTemas.length);
+            const temaIncorrecto = todosLosTemas[indiceIncorrecto];
+
+            if (temaIncorrecto !== temaArticulo && !temasIncorrectos.includes(temaIncorrecto)) {
+                temasIncorrectos.push(temaIncorrecto);
+            }
+        }
+
+        const todasLasOpciones = [temaArticulo, ...temasIncorrectos];
+        const opcionesMezcladas = todasLasOpciones.sort(() => Math.random() - 0.5);
+
+        return {
+            pregunta: `¿De qué habla el artículo ${articuloCorrecto} de la constitución?`,
+            opciones: opcionesMezcladas,
+            respuestaCorrecta: temaArticulo,
+            esArticuloTema: true
+        };
+    };
+
     let preguntaActual = null;
     let respuestaSeleccionada = null;
     let totalPreguntas = 0;
     let aciertos = 0;
     let preguntaNumero = 0;
     let articulosDisponibles = [];
+
+    let tiposPreguntasConfig = {
+        'temaArticulo': { activo: true, frecuencia: 50 },
+        'articuloTema': { activo: true, frecuencia: 50 }
+    };
 
     const questionText = document.getElementById('question-text');
     const optionsContainer = document.getElementById('options');
@@ -115,17 +154,70 @@ document.addEventListener("DOMContentLoaded", () => {
     const currentQuestionSpan = document.getElementById('current-question');
     const totalQuestionsSpan = document.getElementById('total-questions');
     const correctAnswersSpan = document.getElementById('correct-answers');
+    const startScreen = document.getElementById('start-screen');
+    const questionContainer = document.getElementById('question-container');
+    const startBtn = document.getElementById('start-btn');
 
     const iniciarTest = () => {
+        // Leer configuración de la pantalla de inicio
+        const checkboxes = document.querySelectorAll('.question-type-checkbox');
+        tiposPreguntasConfig = {};
+
+        checkboxes.forEach(checkbox => {
+            const tipo = checkbox.dataset.tipo;
+            const frecuenciaInput = document.getElementById(`frecuencia-${tipo}`);
+
+            if (checkbox.checked) {
+                tiposPreguntasConfig[tipo] = {
+                    activo: true,
+                    frecuencia: parseInt(frecuenciaInput.value) || 0
+                };
+            }
+        });
+
+        // Validar que al menos un tipo esté activo
+        const tiposActivos = Object.values(tiposPreguntasConfig).filter(t => t.activo);
+        if (tiposActivos.length === 0) {
+            alert('Debes seleccionar al menos un tipo de pregunta');
+            return;
+        }
+
         totalPreguntas = 15;
         preguntaNumero = 0;
         aciertos = 0;
         articulosDisponibles = Object.keys(articulosConstitucion).slice();
         totalQuestionsSpan.textContent = totalPreguntas;
+
+        // Ocultar pantalla de inicio y mostrar el test
+        startScreen.style.display = 'none';
+        questionContainer.style.display = 'block';
+        document.querySelector('.controls').style.display = 'flex';
+        document.querySelector('.score').style.display = 'block';
+
         restartBtn.style.display = 'none';
         nextBtn.style.display = 'inline-block';
         mostrarSiguientePregunta();
     }
+
+    const seleccionarTipoPregunta = () => {
+        const tiposActivos = Object.entries(tiposPreguntasConfig)
+            .filter(([_, config]) => config.activo);
+
+        if (tiposActivos.length === 0) return null;
+
+        const totalFrecuencia = tiposActivos.reduce((sum, [_, config]) => sum + config.frecuencia, 0);
+
+        let random = Math.random() * totalFrecuencia;
+
+        for (const [tipo, config] of tiposActivos) {
+            random -= config.frecuencia;
+            if (random <= 0) {
+                return tipo;
+            }
+        }
+
+        return tiposActivos[0][0];
+    };
 
     const mostrarSiguientePregunta = () => {
         if (preguntaNumero >= totalPreguntas) {
@@ -135,7 +227,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         preguntaNumero++;
         respuestaSeleccionada = null;
-        preguntaActual = generarPreguntaArticulo();
+
+        const tipoPregunta = seleccionarTipoPregunta();
+
+        if (tipoPregunta === 'temaArticulo') {
+            preguntaActual = generarPreguntaTemaArticulo();
+        } else if (tipoPregunta === 'articuloTema') {
+            preguntaActual = generarPreguntaArticuloTema();
+        }
+
+        if (!preguntaActual) {
+            finalizarTest();
+            return;
+        }
 
         questionText.textContent = preguntaActual.pregunta;
         currentQuestionSpan.textContent = preguntaNumero;
@@ -144,7 +248,13 @@ document.addEventListener("DOMContentLoaded", () => {
         preguntaActual.opciones.forEach(opcion => {
             const button = document.createElement('div');
             button.className = 'option';
-            button.textContent = `Artículo ${opcion}`;
+
+            if (preguntaActual.esArticuloTema) {
+                button.textContent = opcion;
+            } else {
+                button.textContent = `Artículo ${opcion}`;
+            }
+
             button.onclick = () => seleccionarOpcion(opcion, button);
             optionsContainer.appendChild(button);
         });
@@ -160,11 +270,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         opciones.forEach(opt => {
             opt.onclick = null;
-            const articulo = opt.textContent.replace('Artículo ', '');
 
-            if (articulo === preguntaActual.respuestaCorrecta) {
+            let valorOpcion;
+            if (preguntaActual.esArticuloTema) {
+                // Para preguntas articuloTema, el texto es directamente el tema
+                valorOpcion = opt.textContent;
+            } else {
+                // Para preguntas temaArticulo, extraer el número del artículo
+                valorOpcion = opt.textContent.replace('Artículo ', '');
+            }
+
+            if (valorOpcion === preguntaActual.respuestaCorrecta) {
                 opt.classList.add('correct');
-            } else if (articulo === opcion) {
+            } else if (valorOpcion === opcion) {
                 opt.classList.add('incorrect');
             }
         });
@@ -189,8 +307,31 @@ document.addEventListener("DOMContentLoaded", () => {
         restartBtn.style.display = 'inline-block';
     }
 
-    nextBtn.addEventListener('click', mostrarSiguientePregunta);
-    restartBtn.addEventListener('click', iniciarTest);
+    const volverAlInicio = () => {
+        startScreen.style.display = 'block';
+        questionContainer.style.display = 'none';
+        document.querySelector('.controls').style.display = 'none';
+        document.querySelector('.score').style.display = 'none';
+    }
 
-    iniciarTest();
+    nextBtn.addEventListener('click', mostrarSiguientePregunta);
+    restartBtn.addEventListener('click', volverAlInicio);
+    startBtn.addEventListener('click', iniciarTest);
+
+    const checkboxes = document.querySelectorAll('.question-type-checkbox');
+    checkboxes.forEach(checkbox => {
+        const tipo = checkbox.dataset.tipo;
+        const frecuenciaInput = document.getElementById(`frecuencia-${tipo}`);
+
+        checkbox.addEventListener('change', () => {
+            frecuenciaInput.disabled = !checkbox.checked;
+            if (!checkbox.checked) {
+                frecuenciaInput.value = 0;
+            }
+        });
+    });
+
+    questionContainer.style.display = 'none';
+    document.querySelector('.controls').style.display = 'none';
+    document.querySelector('.score').style.display = 'none';
 });
